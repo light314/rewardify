@@ -9,75 +9,40 @@ struct DailyActionView: View {
     @State private var newActionTimePeriod = TimePeriod.daily
     @State private var showSheet = false
     @State private var selectedAction: DailyAction?
+    @State private var isEditing = false
+    @State private var editText = ""
     
     var body: some View {
         NavigationView {
             VStack {
                 List {
                     ForEach(lifeArea.dailyActions.indices, id: \.self) { index in
-                        VStack {
-                            if isEditing {
-                                HStack {
-                                    TextField(action.name, text: $editText) { _ in } onCommit: {
-                                        action.name = editText
-                                        isEditing = false
-                                    }
-                                    .textFieldStyle(.roundedBorder)
-                                    
-                                    Button(action: {
-                                        isEditing = false
-                                        editText = ""
-                                    }) {
-                                        Text("Cancel")
-                                    }
-                                }
-                            } else {
-                                
-                                /*
-                                 HStack {
-                                     Text("Time period: \(lifeArea.dailyActions[index].timePeriod.rawValue)")
-                                     Spacer()
-                                     Text("\(lifeArea.dailyActions[index].count)/\(lifeArea.dailyActions[index].goalFrequency)")
-                                 }
-                                 */
-                                
-                                HStack {
-                                    Text(action.name)
+                        VStack{
+                            
+                                VStack {
+                                    Text(lifeArea.dailyActions[index].name)
                                         .font(.headline)
                                         .frame(maxWidth: .infinity, alignment: .leading)
-                                    Text("Time period: \(action.timePeriod.rawValue)")
+                                    HStack{
+                                    Text("Time period: \(lifeArea.dailyActions[index].timePeriod.rawValue)")
                                     Spacer()
-                                    Text("\(action.count)/\(action.goalFrequency)")
+                                    Text("\(lifeArea.dailyActions[index].count)/\(lifeArea.dailyActions[index].goalFrequency)")
+                                    }
                                 }
                                 .contentShape(Rectangle())
-                                
+                                .onTapGesture {
+                                        selectedAction = lifeArea.dailyActions[index]
+                                    }
                                 .onLongPressGesture {
-                                    isEditing = true
-                                    editText = action.name
+                                    /*isEditing = true
+                                    editText = lifeArea.dailyActions[index].name*/
+                                    selectedAction = lifeArea.dailyActions[index]
                                 }
-                            }
+                                .background(selectedAction == lifeArea.dailyActions[index] ? Color.yellow.opacity(0.3) : Color.clear)
+                                                            
                         }
-                        .background(isSelected == action ? Color.yellow.opacity(0.3) : Color.clear)
-                        .onTapGesture {
-                            isSelected = action
-                        }
-
-                        /*VStack {
-                            DailyActionRow(action: $lifeArea.dailyActions[index], isSelected: $selectedAction)
-                        }*/
-                        .contentShape(Rectangle())
-                        .onTapGesture {
-                            selectedAction = lifeArea.dailyActions[index]
-                        }
-                        /*.swipeActions(edge: .leading) {
-                          Button {
-                            print("Bookmark")
-                          } label: {
-                            Label("Bookmark", systemImage: "bookmark")
-                          }.tint(.indigo)
-                        }*/
-
-                           .swipeActions(edge: .leading) {
+                        .listRowSeparator(.visible)
+                        .swipeActions(edge: .leading) {
                                 Button(action: {
                                     lifeArea.dailyActions[index].count += 1
                                     if lifeArea.dailyActions[index].count >= lifeArea.dailyActions[index].goalFrequency {
@@ -94,8 +59,12 @@ struct DailyActionView: View {
                                     Label("Delete", systemImage: "trash")
                                 }
                             }
+
+
+                        
+                        
+                     
                     }
-                    .listRowSeparator(.visible)
                 }
                 .listStyle(.inset)
                 VStack {
@@ -116,16 +85,6 @@ struct DailyActionView: View {
 
                         Button(action: {
                             if !self.newActionName.isEmpty {
-                                
-                                
-                                /*
-                                 @Published var name: String
-                                 @Published var count = 0
-                                 @Published var timePeriod: TimePeriod = .daily
-                                 @Published var goalFrequency = 1
-                                 @Published var isComplete = false
-                                 
-                                 */
                                 let newAction = DailyAction(
                                     name: self.newActionName)
                                 newAction.timePeriod = self.newActionTimePeriod
@@ -143,73 +102,19 @@ struct DailyActionView: View {
                 }
             }
             .sheet(item: $selectedAction) { action in
-                EditDailyActionView(action: $lifeArea.dailyActions[lifeArea.dailyActions.firstIndex(where: { $0.id == action.id })!])
+                EditDailyActionView(action: action,
+                                    lifeArea: lifeArea)
             }
             .navigationBarTitle(lifeArea.name)
-        }
-    }
-}
 
-struct DailyActionRow: View {
-    @Binding var action: DailyAction
-    @Binding var isSelected: DailyAction?
-
-    @State private var isEditing = false
-    @State private var editText = ""
-
-    var body: some View {
-        VStack {
-            if isEditing {
-                HStack {
-                    TextField(action.name, text: $editText) { _ in } onCommit: {
-                        action.name = editText
-                        isEditing = false
-                    }
-                    .textFieldStyle(.roundedBorder)
-                    
-                    Button(action: {
-                        isEditing = false
-                        editText = ""
-                    }) {
-                        Text("Cancel")
-                    }
-                }
-            } else {
-                
-                /*
-                 HStack {
-                     Text("Time period: \(lifeArea.dailyActions[index].timePeriod.rawValue)")
-                     Spacer()
-                     Text("\(lifeArea.dailyActions[index].count)/\(lifeArea.dailyActions[index].goalFrequency)")
-                 }
-                 */
-                
-                HStack {
-                    Text(action.name)
-                        .font(.headline)
-                        .frame(maxWidth: .infinity, alignment: .leading)
-                    Text("Time period: \(action.timePeriod.rawValue)")
-                    Spacer()
-                    Text("\(action.count)/\(action.goalFrequency)")
-                }
-                .contentShape(Rectangle())
-                
-                .onLongPressGesture {
-                    isEditing = true
-                    editText = action.name
-                }
-            }
-        }
-        .background(isSelected == action ? Color.yellow.opacity(0.3) : Color.clear)
-        .onTapGesture {
-            isSelected = action
         }
     }
 }
 
 struct EditDailyActionView: View {
-    @Binding var action: DailyAction
-    
+    @ObservedObject var action: DailyAction
+    @ObservedObject var lifeArea: LifeArea
+    @Environment(\.presentationMode) var presentationMode
     var body: some View {
         NavigationView {
             VStack {
@@ -222,12 +127,20 @@ struct EditDailyActionView: View {
                         Stepper(value: $action.goalFrequency, in: 1...10) {
                             Text("\(action.goalFrequency) time\(action.goalFrequency == 1 ? "" : "s") per \(action.timePeriod.rawValue.lowercased())")
                         }
+                        Picker(selection: $action.timePeriod, label: Text("Time period")) {
+                            ForEach(TimePeriod.allCases, id: \.self) { timePeriod in
+                                Text(timePeriod.rawValue.capitalized).tag(timePeriod)
+                            }
+                        }
                     }
+
                 }
             }
             .navigationBarTitle("Edit action")
             .navigationBarItems(trailing: Button("Save") {
-                self.action.objectWillChange.send()
+                let index = lifeArea.dailyActions.firstIndex(where: { $0.id == action.id })!
+                lifeArea.dailyActions[index] = action
+                self.presentationMode.wrappedValue.dismiss()
             })
         }
     }
